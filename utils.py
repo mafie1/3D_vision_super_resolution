@@ -18,6 +18,9 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
+def calc_psnr(img1, img2):
+    return 10. * torch.log10(1. / torch.mean((img1 - img2) ** 2))
+
 def display_tensor(t):
     if len(t.size()) == 4:  #in case tensor is Batch Tensor, choose first image in Batch
         img = t[0]
