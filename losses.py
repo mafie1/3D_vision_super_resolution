@@ -1,5 +1,6 @@
 import torch
 
+
 class Loss():
 
     def __init__(self):
