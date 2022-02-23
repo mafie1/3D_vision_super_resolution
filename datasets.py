@@ -35,8 +35,8 @@ class EvalDataset(Dataset):
             return len(f['lr'])
 
 
-class CustomDataset(Dataset):
-    """Description"""
+class BSDS500(Dataset):
+    """Dataset from the Berkeley Segmentation Data Set and Benchmarks 500 (BSDS500)"""
     def __init__(self, root_dir, transform=None):
         """
         Args:
@@ -66,3 +66,21 @@ class CustomDataset(Dataset):
             sample = self.transform(sample)
 
         return sample
+
+
+
+class DIV2K(Dataset):
+    """Dataset from the Berkeley Segmentation Data Set and Benchmarks 500 (BSDS500)"""
+    def __init__(self, root_dir, transform=None):
+        """
+        Args:
+            root_dir (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        
+    def __len__(self):
+        pass
+
+    def __getitem__(self, idx):
+        pass
