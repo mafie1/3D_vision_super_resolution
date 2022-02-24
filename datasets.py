@@ -83,14 +83,10 @@ class DIV2K(Dataset):
         self.transform = transform
 
     def __len__(self):
-        list = os.listdir(self.root_dir)  # dir is your directory path
+        #list = os.listdir(self.root_dir)  # dir is your directory path
         onlyfiles = sorted(next(os.walk(self.root_dir))[2])  # dir is your directory path as string
-        print(onlyfiles)
-        #len(onlyfiles)
-        number_files = len(list)
+        number_files = len(onlyfiles)
         return number_files
-
-        #L = len([name for name in os.listdir('.') if os.path.isfile(name)])
 
 
     def __getitem__(self, idx, show_image = False):
@@ -113,13 +109,12 @@ class DIV2K(Dataset):
             plt.show()
 
         if self.transform is not None:
-            #do transform
-            pass
+            img = self.transform(img)
 
-        pass
+        return img
 
 
 if __name__ == '__main__':
-    dataset = DIV2K(root_dir="/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_valid_HR")
-    len(dataset)
-    dataset.__getitem__(idx=1, show_image=True)
+    dataset_valid = DIV2K(root_dir="/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_valid_HR")
+    print(len(dataset_valid))
+    dataset_valid.__getitem__(idx=1, show_image=True)
