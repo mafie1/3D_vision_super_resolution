@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch.utils.tensorboard import SummaryWriter
-
 from math import sqrt
 
 from utils import display_tensor
@@ -114,8 +113,6 @@ if __name__ == '__main__':
 
     #test_tensor = torch.rand(2, 3, 200, 200)  #B, C, H, W
     test_tensor = torch.rand(2, 1, 200, 200)
-
-
 
     #test_model = ResNet()
     #test_model = SRCNN(num_channels=3)
