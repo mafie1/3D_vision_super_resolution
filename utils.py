@@ -26,10 +26,8 @@ def display_tensor(t):
         img = t[0]
     else:
         img = t
-
     #print(img.size())
     img = img.permute(1,2,0).cpu().detach().numpy()
-
     #plotting
     plt.xticks([])
     plt.yticks([])

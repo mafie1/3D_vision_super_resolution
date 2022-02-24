@@ -8,10 +8,11 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from skimage import io
 
+
 """Datasets for H5 """
-class TrainDataset(Dataset):
+class TrainDatasetH5(Dataset):
     def __init__(self, h5_file):
-        super(TrainDataset, self).__init__()
+        super(TrainDatasetH5, self).__init__()
         self.h5_file = h5_file
 
     def __getitem__(self, idx):
@@ -22,9 +23,9 @@ class TrainDataset(Dataset):
         with h5py.File(self.h5_file, 'r') as f:
             return len(f['lr'])
 
-class EvalDataset(Dataset):
+class EvalDatasetH5(Dataset):
     def __init__(self, h5_file):
-        super(EvalDataset, self).__init__()
+        super(EvalDatasetH5, self).__init__()
         self.h5_file = h5_file
 
     def __getitem__(self, idx):
@@ -66,12 +67,13 @@ class BSDS500(Dataset):
         if self.transform is not None:
             sample = self.transform(sample)
 
+        print(sample.shape())
         return sample
 
 
 class DIV2K(Dataset):
-    """Dataset from the Berkeley Segmentation Data Set and Benchmarks 500 (BSDS500)"""
-    def __init__(self, root_dir, transform=None):
+    """Dataset from the Berkeley Segmentation Data Set and Benchmarks 500 (BSDS500) with bicubic 2x downsampling"""
+    def __init__(self, root_labels, root_images, transform=None):
         """
         Args:
             root_dir (string): Directory with all the images.
@@ -79,7 +81,8 @@ class DIV2K(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.root_dir = root_dir
+        self.root_dir = root_labels
+        self.root_downsample = root_images
         self.transform = transform
 
     def __len__(self):
@@ -91,16 +94,26 @@ class DIV2K(Dataset):
 
     def __getitem__(self, idx, show_image = False):
         onlyfiles = sorted(next(os.walk(self.root_dir))[2])
+
         img_name = onlyfiles[idx]
         img_path = self.root_dir + '/' + img_name
+        print(img_path)
+
+
+        path_downsample = self.root_downsample + '/' + img_name[:-4] + 'x2.png'
+        print(path_downsample)
 
         #Reading the File as PIL Image
-        img = Image.open(img_path)
-        print(type(img))
+        #img = Image.open(img_path)
+        #print(type(img))
 
         #Reading using scikit-image
-        img = io.imread(img_path)
-        print(type(img))
+        img = io.imread(img_path) #full-sized image in HR
+        img_downsample = io.imread(path_downsample)
+        #print(type(img))
+
+        #TO DO: resize LR image to full size
+
 
         if show_image:
             plt.xticks([])
@@ -110,11 +123,43 @@ class DIV2K(Dataset):
 
         if self.transform is not None:
             img = self.transform(img)
+            img_downsample = self.transform(img_downsample)
 
-        return img
+
+        label = img #label is high-resolution ground truth
+        return img_downsample, label
 
 
 if __name__ == '__main__':
-    dataset_valid = DIV2K(root_dir="/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_valid_HR")
+    ROOT_labels= "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_train_HR"
+    ROOT_images = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_train_LR_bicubic/X2"
+
+    dataset_valid = DIV2K(root_labels=ROOT_labels, root_images = ROOT_images)
     print(len(dataset_valid))
-    dataset_valid.__getitem__(idx=1, show_image=True)
+    LR_image, HR_image = dataset_valid.__getitem__(idx=2)
+
+    plt.imshow(LR_image)
+    plt.show()
+
+    plt.imshow(HR_image)
+    plt.show()
+
+
+    #TRAIN_FILE = "data/91-image_x2.h5"
+    #dataset_h5 = TrainDatasetH5(TRAIN_FILE)
+
+    #image, label = dataset_h5.__getitem__(1)
+
+    """
+    plt.imshow(image[0,:,:], cmap='gray', interpolation='bicubic')
+    plt.show()
+    plt.imshow(label[0,:,:], cmap='gray', interpolation='bicubic')
+    plt.show()
+
+    print(image.shape)
+    print(label.shape)
+    print(type(image))"""
+
+
+
+
