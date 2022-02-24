@@ -99,6 +99,7 @@ class VAE(nn.Module):
     def forward(self, x):
         pass
 
+
 class UNet(nn.Module):
     def __init__(self):
         pass
