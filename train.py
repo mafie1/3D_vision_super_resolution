@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.dataloader import DataLoader
-from torchvision import transforms as T
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
 
@@ -35,9 +33,7 @@ def train_function(model, criterion, optimizer,
 
     eval_dataloader = DataLoader(dataset=EVAL_DATASET, batch_size=1)
 
-    running_loss = 0.0
-    best_epoch = 0
-    best_psnr = 0.0
+
 
     writer = SummaryWriter('runs/training')
     dataiter = iter(train_dataloader)
@@ -47,6 +43,10 @@ def train_function(model, criterion, optimizer,
     writer.add_image('sample images', img_grid)
     writer.add_graph(model, images)
 
+
+    running_loss = 0.0
+    best_epoch = 0
+    best_psnr = 0.0
 
     for epoch in range(num_epochs):
         model.train()
@@ -69,7 +69,6 @@ def train_function(model, criterion, optimizer,
                 #writer.add_scalar('Iteration Loss ',
                  #                 epoch_losses.val,
                   #                epoch * len(train_dataloader) + i)
-
                 #writer.add_scalar('Iteration Loss Average',
                  #                 epoch_losses.avg, #epoch_losses.val
                   #                epoch * len(train_dataloader) + i)
@@ -116,9 +115,7 @@ def train_function(model, criterion, optimizer,
 
 
     """
-    writer.add_figure('predictions vs. actuals',
-                            plot_classes_preds(net, inputs, labels),
-                            global_step=epoch * len(trainloader) + i)
+    writer.add_figure()
     """
 
     print('best epoch: {}, psnr: {:.2f}'.format(best_epoch, best_psnr))
@@ -147,12 +144,21 @@ if __name__ == '__main__':
 
     OUT_DIR = "outputs"
 
-    #MODEL = SRCNN(num_channels=1).to(DEVICE)  # color image
-    MODEL = VDSR(d=4).to(DEVICE)
+    #MODEL = SRCNN(num_channels=1).to(DEVICE)  #num_channels = 1 for gray scale images
+    MODEL = VDSR(num_channels=1 , d=4).to(DEVICE)  #defaul is three channel (e.g. RGB) images
 
     OPTIMIZER = optim.Adam(MODEL.parameters(),
                            lr=LEARNING_RATE)  # all training, later: train head and backbone separate
-    CRITERION = nn.MSELoss()
+
+    """ if only head or backbone shall be trained, use a version of this code snippet
+    optimizer = optim.Adam([
+            {'params': model.conv1.parameters()},
+            {'params': model.conv2.parameters()},
+            {'params': model.conv3.parameters(), 'lr': LEARNING_RATE * 0.1}
+        ], lr=LEARNING_RATE)
+    """
+
+    CRITERION = nn.MSELoss() #Mean-Squared-Error Loss
 
 
     """ROOT_labels = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_train_HR"
@@ -162,17 +168,6 @@ if __name__ == '__main__':
 
 
 
-
-
-    TRANSFORM_IMG = T.Compose([
-        T.Resize(256),
-        T.CenterCrop(256),
-        T.ToTensor(),
-        T.Normalize(mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225])
-    ])
-
-
     train_function(model = MODEL,
                    criterion = CRITERION,
                    optimizer = OPTIMIZER,
@@ -180,12 +175,3 @@ if __name__ == '__main__':
                    num_epochs = NUM_EPOCHS, batch_size = BATCH_SIZE,
                    num_workers=NUM_WORKERS,
                    OUT_DIR = OUT_DIR)
-
-
-    """
-    optimizer = optim.Adam([
-            {'params': model.conv1.parameters()},
-            {'params': model.conv2.parameters()},
-            {'params': model.conv3.parameters(), 'lr': args.lr * 0.1}
-        ], lr=args.lr)
-    """
