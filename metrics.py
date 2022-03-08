@@ -37,7 +37,7 @@ def weighted_loss(original, compressed):
     mseLoss = nn.MSELoss()
     mse = mseLoss(original, compressed)
 
-    psnr_score = psnr(original, compressed)
+    psnr_score = PSNR(original, compressed)
     # PSNR is maximized so 100-PSNR is a loss function (Or -PSNR)
     psnr_loss = 100 - psnr_score
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     gt = label[0,:,:]
     pred = image[0,:,:]
-    
+
     print(SSIM(pred, gt))
     print(SSIM(gt, gt))
 
