@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch.utils.tensorboard import SummaryWriter
+import pytorch_lightning as pl
 from math import sqrt
 
 from utils import display_tensor
@@ -61,6 +62,7 @@ class SRCNN(nn.Module):
     """
     SRCNN model from [paper citation]:
     feature maps are 1 (original) --> 64 --> 32 --> 1 (output)
+    see https://github.com/yjn870/SRCNN-pytorch/blob/master/models.py
     """
     def __init__(self, num_channels=3):
 
@@ -111,7 +113,6 @@ class UNet(nn.Module):
 if __name__ == '__main__':
     writer = SummaryWriter('runs/experimenting')
 
-
     #test_tensor = torch.rand(2, 3, 200, 200)  #B, C, H, W
     test_tensor = torch.rand(2, 1, 200, 200)
 
@@ -124,8 +125,8 @@ if __name__ == '__main__':
     y = test_model(test_tensor)
     print(y.size())
 
-    writer.add_graph(test_model, test_tensor)
-    writer.close()
+    #writer.add_graph(test_model, test_tensor)
+    #writer.close()
     #display_tensor(y)
 
 
