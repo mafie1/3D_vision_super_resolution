@@ -1,3 +1,5 @@
 matplotlib
 torch
 numpy
+torchvision
+scikit-image
