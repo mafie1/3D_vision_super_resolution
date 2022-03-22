@@ -9,7 +9,6 @@ class Loss():
     def total_variation_loss(self):
         pass
 
-
     def pixel_loss(self):
         pass
 
