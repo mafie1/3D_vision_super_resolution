@@ -11,7 +11,7 @@ from skimage.transform import rescale as rescale #, resize, downscale_local_mean
 from skimage.transform import rotate as rotate
 
 from utils import calc_psnr, set_all_seeds
-from metrics import PEAK_SIGNAL_TO_NOISE, SSIM
+from metrics import PEAK_SIGNAL_TO_NOISE, _ssim
 
 
 """Datasets for H5 """
@@ -152,10 +152,10 @@ def test_BSD100():
         hr_image = hr_image.squeeze(0).cpu().detach().numpy()
 
         psnes[i] = PEAK_SIGNAL_TO_NOISE(lr_image, hr_image)
-        ssims[i] = SSIM(lr_image, hr_image)
+        ssims[i] = _ssim(lr_image, hr_image)
 
         print(PEAK_SIGNAL_TO_NOISE(lr_image, hr_image))
-        print(SSIM(lr_image, hr_image))
+        print(_ssim(lr_image, hr_image))
 
     plt.plot(psnes)
     plt.plot(ssims)

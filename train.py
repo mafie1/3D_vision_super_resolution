@@ -14,7 +14,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 from models import SRCNN, VDSR
-from metrics import SSIM, calc_ssim, PSNR, calc_psnr
+from metrics import _ssim, calc_ssim, _psnr, calc_psnr
 from utils import display_tensor
 from utils import AverageMeter
 from datasets import TrainDatasetH5, EvalDatasetH5, BSD100
