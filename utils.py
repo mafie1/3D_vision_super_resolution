@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import torch
+import numpy as np
 
 class AverageMeter(object):
     def __init__(self):
@@ -18,8 +19,6 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def calc_psnr(img1, img2):
-    return 10. * torch.log10(1. / torch.mean((img1 - img2) ** 2))
 
 def display_tensor(t):
     if len(t.size()) == 4:  #in case tensor is Batch Tensor, choose first image in Batch
@@ -34,7 +33,12 @@ def display_tensor(t):
     plt.imshow(img)
     plt.show()
 
+
+def set_all_seeds(SEED):
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
+
+
 if __name__ == '__main__':
     test_tensor = torch.rand(2, 3, 200, 200)
-
     display_tensor(test_tensor)

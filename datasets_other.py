@@ -1,3 +1,13 @@
+import h5py
+import numpy as np
+import os
+import io
+import torch
+from torch.utils.data import Dataset
+from PIL import Image
+import matplotlib.pyplot as plt
+from skimage import io
+from skimage.transform import rescale, resize, downscale_local_mean
 
 class DIV2K(Dataset):
     """Dataset from the Berkeley Segmentation Data Set and Benchmarks 500 (BSDS500) with bicubic 2x downsampling"""
@@ -100,3 +110,25 @@ class domain_transfer_DS(Dataset): #unfinished
         print('SIZE HR image:', img_HR.shape)
         print('SIZE LR image:', img_LR.shape)
         return img_LR, img_HR
+
+
+if __name__ == '__main__':
+    ROOT_labels = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data/DIV2K_train_HR"
+    ROOT_images = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data/DIV2K_train_LR_bicubic/X2"
+    dataset_valid = DIV2K(root_HR=ROOT_labels, root_LR=ROOT_images)
+    LR_image, HR_image = dataset_valid.__getitem__(idx=2)
+    plt.imshow(LR_image)
+    plt.show()
+    plt.imshow(HR_image)
+    plt.show()
+
+
+
+
+    """ if only head or backbone shall be trained, use a version of this code snippet
+    optimizer = optim.Adam([
+            {'params': model.conv1.parameters()},
+            {'params': model.conv2.parameters()},
+            {'params': model.conv3.parameters(), 'lr': LEARNING_RATE * 0.1}
+        ], lr=LEARNING_RATE)
+    """

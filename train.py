@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
+from torch.utils.data import Subset
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 import os
@@ -11,18 +13,21 @@ import copy
 import numpy as np
 from sklearn.model_selection import train_test_split
 
+
 from models import SRCNN, VDSR
+from metrics import SSIM, calc_ssim, PSNR, calc_psnr
 from utils import display_tensor
-from utils import AverageMeter, calc_psnr
-from datasets import TrainDatasetH5, EvalDatasetH5, DIV2K
+from utils import AverageMeter
+from datasets import TrainDatasetH5, EvalDatasetH5, BSD100
+from transformations import SIMPLE_TRANSFORM, MINIMALIST_TRANSFORM
 
 
-#in command line: tensorboard --logdir=runs
+#in command line:go to the directory of the project, activate environment and run tensorboard --logdir=runs
 
 def train_function(model, criterion, optimizer,
                    train_dataset, eval_dataset,
                    num_epochs, batch_size, num_workers,
-                   OUT_DIR, transform = None):
+                   OUT_DIR):
 
     train_dataloader = DataLoader(dataset=train_dataset,
                                   batch_size=batch_size,
@@ -31,82 +36,103 @@ def train_function(model, criterion, optimizer,
                                   pin_memory=True,
                                   drop_last=True)
 
-    eval_dataloader = DataLoader(dataset=EVAL_DATASET, batch_size=1)
+    eval_dataloader = DataLoader(dataset=eval_dataset, batch_size=1)
 
+    writer = SummaryWriter('runs/training/VDSR')
 
+    images, labels = iter(train_dataloader).next()
+    img_grid = torchvision.utils.make_grid(torch.cat((images[0:2], labels[0:2]), 0), nrow=2, padding=2)
 
-    writer = SummaryWriter('runs/training')
-    dataiter = iter(train_dataloader)
-    images, labels = dataiter.next()
-    img_grid = torchvision.utils.make_grid(images)
+    writer.add_image('Starting Point: Sample Pairs of HR-LR Images', img_grid)
+    writer.add_graph(model.float(), images.float())
 
-    writer.add_image('sample images', img_grid)
-    writer.add_graph(model, images)
-
-
-    running_loss = 0.0
-    best_epoch = 0
-    best_psnr = 0.0
+    #running_loss = 1e3 #loss according to the criterion (e.g. MSE loss)
+    best_epoch = 0 #at the start, the best epoch is the first
+    best_psnr = 0.0 #best Peak-Signal-To-Noise Ration across all epochs
 
     for epoch in range(num_epochs):
         model.train()
-        epoch_losses = AverageMeter()
+        epoch_losses = AverageMeter()        #this is the (MSE) loss for all epochs
+
+        epoch_psnr = AverageMeter()          #this is the PSNR score for the eval set
+        epoch_psnr_baseline = AverageMeter()
+
+        epoch_SSIM = AverageMeter()
+        epoch_SSIM_baseline = AverageMeter()
 
         with tqdm(total=(len(train_dataset) - len(train_dataset) % batch_size)) as t:
-            t.set_description('epoch: {}/{}'.format(epoch, num_epochs - 1))
+            t.set_description('Epoch: {}/{}; Batches in Progress'.format(epoch, num_epochs - 1))
 
-            for i, data in enumerate(train_dataloader,0):
+            for i, data in enumerate(train_dataloader, 0):
                 inputs, labels = data
 
-                inputs = inputs.to(DEVICE)
-                labels = labels.to(DEVICE) #labels are high-resolution ground truth
+                inputs = inputs.to(DEVICE).float()
+                labels = labels.to(DEVICE).float() #labels are high-resolution ground truth, float type is 32bit, double is 64bit floating point number
 
                 preds = model(inputs)
                 loss = criterion(preds, labels)
 
                 epoch_losses.update(loss.item(), len(inputs))
 
-                #writer.add_scalar('Iteration Loss ',
-                 #                 epoch_losses.val,
-                  #                epoch * len(train_dataloader) + i)
-                #writer.add_scalar('Iteration Loss Average',
-                 #                 epoch_losses.avg, #epoch_losses.val
-                  #                epoch * len(train_dataloader) + i)
-
-                writer.add_scalars('data/losses_scalar_group', {'Iteration Loss': epoch_losses.val, 'Iteration Loss Average': epoch_losses.avg} , epoch*len(train_dataloader)+i)
+                #Tensorboard loss-tracking
+                #writer.add_scalars('data/losses_scalar_group',
+                 #                  {'Iteration Loss': epoch_losses.val, 'Iteration Loss Average': epoch_losses.avg} ,
+                  #                 epoch*len(train_dataloader)+i)
+                #writer.add_scalar()
                 #writer.add_scalars('data/scalar_group', {'Iteration Loss Average': epoch_losses.avg}, epoch*len(train_dataloader)+i)
 
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
-                t.set_postfix(loss='{:.6f}'.format(epoch_losses.avg))
+                t.set_postfix(loss='{:.6f}'.format(epoch_losses.val))
                 t.update(len(inputs))
+
+        writer.add_scalar('training loss', epoch_losses.avg / len(train_dataloader), epoch)
 
         torch.save(model.state_dict(), os.path.join(OUT_DIR, 'epoch_{}.pth'.format(epoch+1)))
 
+        """Evaluation after each training epoch"""
         model.eval()
-        epoch_psnr = AverageMeter()
 
         for data in eval_dataloader:
             inputs, labels = data
+            inputs = inputs.to(DEVICE).float()
+            labels = labels.to(DEVICE).float()
 
-            inputs = inputs.to(DEVICE)
-            labels = labels.to(DEVICE)
+            #print(torch.max(inputs))
+            #print(torch.max(labels))
 
             with torch.no_grad():
                 preds = model(inputs).clamp(0.0, 1.0)
+                #print(torch.max(preds))
+
 
             epoch_psnr.update(calc_psnr(preds, labels), len(inputs))
+            epoch_psnr_baseline.update(calc_psnr(inputs, labels), len(inputs))
 
-        writer.add_scalar('PSNR',
-                          epoch_psnr.val,
-                          epoch * len(train_dataloader) + i)
+            epoch_SSIM.update(calc_ssim(preds, labels), len(inputs))
+            epoch_SSIM_baseline.update(calc_ssim(inputs, labels), len(inputs))
 
-        print('eval psnr: {:.2f}'.format(epoch_psnr.avg))
-        writer.add_scalar('Epoch PSNR',
-                          epoch_psnr.avg,
-                          epoch)
+            #writer.add_scalar('PSNR',
+            #                 epoch_psnr.val,
+            #                 epoch * len(train_dataloader) + i)
+            #plt.imshow(preds.squeeze(0).permute(1,2,0).cpu().detach().numpy())
+            #plt.show()
+
+        img_grid_end = torchvision.utils.make_grid(torch.cat((inputs, labels, preds), 0), nrow=3)
+        writer.add_image('Images after {} epochs: LR, HR, Prediction '.format(epoch), img_grid_end)
+        writer.add_scalar('Eval PSNR', epoch_psnr.avg / len(eval_dataloader), epoch)
+        writer.add_scalar('Baseline PSNR', epoch_psnr_baseline.avg / len(eval_dataloader), epoch)
+        writer.add_scalar('Eval SSIM', epoch_SSIM.avg/ len(eval_dataloader), epoch)
+        writer.add_scalar('Baseline SSIM', epoch_SSIM_baseline.avg / len(eval_dataloader), epoch)
+
+        print('Eval PSNR: {:.2f}dB'.format(epoch_psnr.avg))
+        print('Eval PSNR on baseline: {:.2f}dB'.format(epoch_psnr_baseline.avg))
+
+        print('Eval SSIM: {:.2f}'.format(epoch_SSIM.avg))
+        print('Eval SSIM on baseline: {:.2f}'.format(epoch_SSIM_baseline.avg))
+
 
         if epoch_psnr.avg > best_psnr:
             best_epoch = epoch
@@ -114,59 +140,43 @@ def train_function(model, criterion, optimizer,
             best_weights = copy.deepcopy(model.state_dict())
 
 
-    """
-    writer.add_figure()
-    """
-
-    print('best epoch: {}, psnr: {:.2f}'.format(best_epoch, best_psnr))
+    """End of Training Statistics & Save Best Model"""
+    print('best epoch: {}, psnr: {:.2f}dB'.format(best_epoch, best_psnr))
     torch.save(best_weights, os.path.join(OUT_DIR, 'best.pth'))
+
+    img_grid_end = torchvision.utils.make_grid(torch.cat((inputs, labels, preds), 0), nrow=3, padding=2)
+    writer.add_image('End of Training: LR, HR, Prediction ', img_grid_end)
     writer.close()
 
 
 if __name__ == '__main__':
-
     SEED = 0
-    LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 2
-    BATCH_SIZE = 4
+    LEARNING_RATE = 5e-4
+    NUM_EPOCHS = 20
+    BATCH_SIZE = 8
     NUM_WORKERS = 0
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    CHANNELS = 3
 
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
-
-    TRAIN_FILE = "data/91-image_x2.h5"
-    EVAL_FILE = "data/Set5_x2.h5"
-
-    TRAIN_DATASET = TrainDatasetH5(TRAIN_FILE) #add transformations!
-    EVAL_DATASET = EvalDatasetH5(EVAL_FILE)
+    link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_github/BSD100/image_SRF_4'
+    #BSD100_dataset = BSD100(root_dir=link, scale=4, transform=SIMPLE_TRANSFORM)
+    BSD100_dataset = BSD100(root_dir=link, scale=4, transform=MINIMALIST_TRANSFORM)
+    dataset_small = Subset(BSD100_dataset, np.arange(60))
+    TRAIN_DATASET, EVAL_DATASET = train_test_split(dataset_small, test_size=0.1, random_state=SEED)
+    print('Train-Eval-Split is done. \nThere are x images in the \nTraining Set: {}\nEval Set: {}'.format(len(TRAIN_DATASET), len(EVAL_DATASET)))
 
     OUT_DIR = "outputs"
+   #MODEL = SRCNN(num_channels=CHANNELS).to(DEVICE).double()  #num_channels = 1 for gray scale images, 3 for color images
+    MODEL = VDSR(num_channels=CHANNELS, d=4).to(DEVICE).float()  #default is three channel (e.g. RGB) images
 
-    #MODEL = SRCNN(num_channels=1).to(DEVICE)  #num_channels = 1 for gray scale images
-    MODEL = VDSR(num_channels=1 , d=4).to(DEVICE)  #defaul is three channel (e.g. RGB) images
+    OPTIMIZER = optim.Adam(MODEL.parameters(), lr=LEARNING_RATE)  # all training, later: train head and backbone separate
+    #OPTIMIZER = optim.SGD(MODEL.parameters(), lr=LEARNING_RATE)
 
-    OPTIMIZER = optim.Adam(MODEL.parameters(),
-                           lr=LEARNING_RATE)  # all training, later: train head and backbone separate
-
-    """ if only head or backbone shall be trained, use a version of this code snippet
-    optimizer = optim.Adam([
-            {'params': model.conv1.parameters()},
-            {'params': model.conv2.parameters()},
-            {'params': model.conv3.parameters(), 'lr': LEARNING_RATE * 0.1}
-        ], lr=LEARNING_RATE)
-    """
-
-    CRITERION = nn.MSELoss() #Mean-Squared-Error Loss
-
-
-    """ROOT_labels = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_train_HR"
-    ROOT_images = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/3D_vision_super_resolution/data/DIV2K_train_LR_bicubic/X2"
-    TRAIN_DATASET = DIV2K(root_labels=ROOT_labels, root_images=ROOT_images)#[0:600]
-    EVAL_DATASET = ... """
-
-
+    #CRITERION = nn.MSELoss() #Mean-Squared-Error Loss = L2 loss
+    CRITERION = nn.L1Loss() #L1 Loss
 
     train_function(model = MODEL,
                    criterion = CRITERION,

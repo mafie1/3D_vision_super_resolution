@@ -3,9 +3,12 @@ import PIL
 from PIL import Image
 from skimage import transform
 
+
 def bicubic_upsampler(image, new_shape = (500, 500)):
-    """To Do: Check if this works for images that are not necessarily PIL images!"""
-    #new_image = image.resize((800,400),Image.BICUBIC)
+    """To Do: Check if this works for all types of images (--> including PIL)!
+    Check https://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.warp for more info on the function"""
+    #alternative for PIL new_image = image.resize((800,400),Image.BICUBIC)
+
     new_image = transform.resize(image, output_shape=new_shape, order = 3) #order=3 is bicubic
     return new_image
 
@@ -13,10 +16,26 @@ def nearest_upsampler(image, new_shape):
     new_image = transform.resize(image, output_shape=new_shape, order=0)  # order=0 is nearest neighbor
     return new_image
 
+SIMPLE_TRANSFORM = T.Compose([
+    T.ToTensor(),
+    T.Normalize(mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225])])
+
+MINIMALIST_TRANSFORM = T.Compose([
+    T.ToTensor(),
+    T.RandomHorizontalFlip(p=0.5)
+])
 
 TRANSFORM_LR = T.Compose([
     T.Resize(256),
     T.CenterCrop(256),
+    T.ToTensor(),
+    T.Normalize(mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225])])
+
+
+EVAL_TRANSFORM = T.Compose([
+    T.Resize(256),
     T.ToTensor(),
     T.Normalize(mean=[0.485, 0.456, 0.406],
                 std=[0.229, 0.224, 0.225])])

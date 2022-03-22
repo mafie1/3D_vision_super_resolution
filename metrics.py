@@ -1,23 +1,29 @@
 import math
 import numpy as np
 import torch.nn as nn
-
+import torch
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import mean_squared_error
+from skimage.metrics import peak_signal_noise_ratio
 
-def PSNR(pred, gt, shave_border=0):
-    height, width = pred.shape[:2]
-    pred = pred[shave_border:height - shave_border, shave_border:width - shave_border]
-    gt = gt[shave_border:height - shave_border, shave_border:width - shave_border]
-    imdff = pred - gt
-    rmse = math.sqrt(np.mean(imdff ** 2))
-    if rmse == 0:
-        return 100
-    return 20 * math.log10(255.0 / rmse) #db (logarithmic scale)
+def calc_psnr(img1, img2):
+    """Implmentation of PSNR for torch tensors"""
+    return 10. * torch.log10(1.0 / torch.mean((img1- img2) ** 2))
+
+def PSNR(pred, gt):
+    """Implementation of PSNR for images as numpy arrays"""
+    return peak_signal_noise_ratio(pred, gt, data_range=pred.max()-pred.min())
 
 def SSIM(pred, gt):
-    """Implementation of the Structural Similarity Index """
-    return ssim(pred, gt, data_range=gt.max() - gt.min())
+    """Implementation of the Structural Similarity Index for images as numpy arrays """
+    return ssim(pred, gt, data_range=pred.max() - pred.min(), channel_axis=2)
+
+def calc_ssim(pred, gt):
+    """SSIM Implementation for torch tensors"""
+    pred = pred.squeeze(0).cpu().detach().numpy()
+    gt = gt.squeeze(0).cpu().detach().numpy()
+    return ssim(pred, gt, data_range=pred.max() - pred.min(), channel_axis=0)
+
 
 def MSE(pred, gt):
     #assert size is the same
@@ -41,7 +47,7 @@ def weighted_loss(original, compressed):
     # PSNR is maximized so 100-PSNR is a loss function (Or -PSNR)
     psnr_loss = 100 - psnr_score
 
-    ssim_score = ssim.ssim(original, compressed)
+    ssim_score = SSIM(original, compressed)
     ssim_loss = 1 - ssim_score.item()
 
     weighted_loss = (0.4 * mse) + (0.5 * (psnr_loss / 100)) + (0.1 * ssim_loss)
@@ -74,3 +80,6 @@ if __name__ == '__main__':
 
     print(MSE(pred, gt))
     print(MSE(gt, gt))
+
+    print(weighted_loss(pred, gt))
+
