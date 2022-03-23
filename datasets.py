@@ -106,7 +106,7 @@ class BSD100(Dataset):
         return img_LR, img_HR
 
 def test_h5():
-    TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_own/Set5/91-image_x4.h5"
+    TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/91-Images/91-image_x4.h5"
     dataset_h5 = TrainDatasetH5(TRAIN_FILE)
     print(len(dataset_h5))
     image, label = dataset_h5.__getitem__(0)
@@ -125,7 +125,7 @@ def test_h5():
 
 
 def test_BSD100():
-    link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_github/BSD100/image_SRF_2'
+    link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_2'
     BSD100_dataset = BSD100(root_dir=link, scale=2)
     print(len(BSD100_dataset))
 
@@ -150,10 +150,10 @@ def test_BSD100():
         lr_image = lr_image.squeeze(0).cpu().detach().numpy()
         hr_image = hr_image.squeeze(0).cpu().detach().numpy()
 
-        psnes[i] = PEAK_SIGNAL_TO_NOISE(lr_image, hr_image)
+        psnes[i] = PSNR(lr_image, hr_image)
         ssims[i] = SSIM(lr_image, hr_image)
 
-        print(PEAK_SIGNAL_TO_NOISE(lr_image, hr_image))
+        print(PSNR(lr_image, hr_image))
         print(SSIM(lr_image, hr_image))
 
     plt.plot(psnes)
@@ -161,8 +161,8 @@ def test_BSD100():
     plt.show()
 
 if __name__ == '__main__':
-    #test_h5()
-    test_BSD100()
+    test_h5()
+    #test_BSD100()
 
 
     #dataset = BSDS500(mode='test')

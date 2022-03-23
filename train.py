@@ -13,14 +13,12 @@ import copy
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-
 from models import SRCNN, VDSR
 from metrics import SSIM, calc_ssim, PSNR, calc_psnr
 from utils import display_tensor
 from utils import AverageMeter
 from datasets import TrainDatasetH5, EvalDatasetH5, BSD100
 from transformations import SIMPLE_TRANSFORM, MINIMALIST_TRANSFORM
-
 
 #in command line:go to the directory of the project, activate environment and run tensorboard --logdir=runs
 
@@ -46,7 +44,6 @@ def train_function(model, criterion, optimizer,
     writer.add_image('Starting Point: Sample Pairs of HR-LR Images', img_grid)
     writer.add_graph(model.float(), images.float())
 
-    #running_loss = 1e3 #loss according to the criterion (e.g. MSE loss)
     best_epoch = 0 #at the start, the best epoch is the first
     best_psnr = 0.0 #best Peak-Signal-To-Noise Ration across all epochs
 
@@ -156,15 +153,30 @@ if __name__ == '__main__':
     BATCH_SIZE = 4
     NUM_WORKERS = 0
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    CHANNELS = 3
 
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
-    link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_4'
-    BSD100_dataset = BSD100(root_dir=link, scale=4, transform=MINIMALIST_TRANSFORM)
-    print(len(BSD100_dataset))
-    dataset_small = Subset(BSD100_dataset, np.arange(10))
+    """Set 5 Dataset --> use for example as validatation set"""
+    #TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/Set5/Set5_x2.h5"
+    #dataset_h5 = TrainDatasetH5(TRAIN_FILE)
+    #dataset_small = Subset(dataset_h5, np.arange(5))
+    #CHANNELS = 1
+
+
+    """91-Images Dataset"""
+    TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/91-Images/91-image_x4.h5"
+    dataset_h5 = TrainDatasetH5(TRAIN_FILE)
+    dataset_small = Subset(dataset_h5, np.arange(1000))
+    CHANNELS = 1
+
+    """BSD100 Dataset"""
+    #link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_4'
+    #BSD100_dataset = BSD100(root_dir=link, scale=4, transform=MINIMALIST_TRANSFORM)
+    #print(len(BSD100_dataset))
+    #dataset_small = Subset(BSD100_dataset, np.arange(10))
+    #CHANNELS = 3
+
 
     TRAIN_DATASET, EVAL_DATASET = train_test_split(dataset_small, test_size=0.1, random_state=SEED)
     print('Train-Eval-Split is done. \nThere are x images in the \nTraining Set: {}\nEval Set: {}'.format(len(TRAIN_DATASET), len(EVAL_DATASET)))
