@@ -10,8 +10,8 @@ from skimage import io
 from skimage.transform import rescale as rescale #, resize, downscale_local_mean
 from skimage.transform import rotate as rotate
 
-from utils import calc_psnr, set_all_seeds
-from metrics import PEAK_SIGNAL_TO_NOISE, SSIM
+from utils import set_all_seeds
+from metrics import PSNR, SSIM, calc_ssim, calc_psnr
 
 
 """Datasets for H5 """
@@ -55,7 +55,7 @@ class BSD100(Dataset):
                 on a sample.
         """
         self.scale = scale
-        self.root = root_dir #'/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data/BSR/BSDS500/images/'
+        self.root = root_dir #'/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSDS100/images/'
         self.transform = transform
 
     def __len__(self):
