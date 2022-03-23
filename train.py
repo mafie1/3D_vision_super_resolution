@@ -161,10 +161,11 @@ if __name__ == '__main__':
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
-    link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_github/BSD100/image_SRF_4'
-    #BSD100_dataset = BSD100(root_dir=link, scale=4, transform=SIMPLE_TRANSFORM)
+    link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_4'
     BSD100_dataset = BSD100(root_dir=link, scale=4, transform=MINIMALIST_TRANSFORM)
-    dataset_small = Subset(BSD100_dataset, np.arange(60))
+    print(len(BSD100_dataset))
+    dataset_small = Subset(BSD100_dataset, np.arange(10))
+
     TRAIN_DATASET, EVAL_DATASET = train_test_split(dataset_small, test_size=0.1, random_state=SEED)
     print('Train-Eval-Split is done. \nThere are x images in the \nTraining Set: {}\nEval Set: {}'.format(len(TRAIN_DATASET), len(EVAL_DATASET)))
 

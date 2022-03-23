@@ -44,7 +44,6 @@ class EvalDatasetH5(Dataset):
             return len(f['lr'])
 
 
-
 class BSD100(Dataset):
     """Description"""
     def __init__(self, root_dir=None, transform=None, scale=None):
@@ -91,7 +90,7 @@ class BSD100(Dataset):
 
         """Upsample Low Resolution Image"""
         if self.scale is not None:
-            img_LR_upsampled = rescale(img_LR, self.scale, order=3, channel_axis=2) #bicubic
+            img_LR_upsampled = rescale(img_LR, self.scale, order=3, channel_axis=2) #order 3 => bicubic
             img_LR = img_LR_upsampled
             assert img_HR.shape == img_LR.shape
 
