@@ -71,6 +71,7 @@ class VDSR(nn.Module):
                                bias=False)
         self.output = nn.Conv2d(in_channels=64, out_channels=num_channels, kernel_size=3, stride=1, padding=1,
                                 bias=False)
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.relu = nn.ReLU(inplace=True)
 
         for m in self.modules():
@@ -81,7 +82,7 @@ class VDSR(nn.Module):
     def forward(self, x):
         # if self.scale is not None:
         #   x = self.pre_upsample(x)
-        residual = x
+        residual = x.to(self.device)
         out = self.relu(self.input(x))
         out = self.residual_layer(out)
         out = self.output(out)
@@ -112,7 +113,6 @@ class SRCNN(nn.Module):
     def forward(self, x):
         # if self.scale is not None:
         #   x = self.pre_upsample(x)
-
         x = self.conv1(x)
         x = self.relu1(x)
 

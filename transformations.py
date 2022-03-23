@@ -4,6 +4,7 @@ from PIL import Image
 from skimage import transform
 from datasets import TrainDatasetH5
 import matplotlib.pyplot as plt
+import os
 
 
 def bicubic_upsampler(img, new_shape=(500, 500)):
@@ -47,7 +48,8 @@ EVAL_TRANSFORM = transforms.Compose([
                          std=[0.229, 0.224, 0.225])])
 
 if __name__ == '__main__':
-    TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data/Set5/91-image_x2.h5"
+    train_file_name = '91-image_x2.h5'
+    TRAIN_FILE = os.path.abspath(os.path.join(__file__, f'../data_SR/91-Images/{train_file_name}'))
     dataset_h5 = TrainDatasetH5(TRAIN_FILE)
 
     image, label = dataset_h5.__getitem__(1)

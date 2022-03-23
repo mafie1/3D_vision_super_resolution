@@ -40,7 +40,7 @@ def train_function(model, criterion, optimizer,
     img_grid = torchvision.utils.make_grid(torch.cat((images[0:2], labels[0:2]), 0), nrow=2, padding=2)
 
     writer.add_image('Starting Point: Sample Pairs of HR-LR Images', img_grid)
-    writer.add_graph(model.float(), images.float())
+    writer.add_graph(model.to(DEVICE), images.to(DEVICE))
 
     best_epoch = 0  # at the start, the best epoch is the first
     best_psnr = 0.0  # best Peak-Signal-To-Noise Ration across all epochs
@@ -60,10 +60,11 @@ def train_function(model, criterion, optimizer,
 
             for i, data in enumerate(train_dataloader, 0):
                 inputs, labels = data
+                inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
 
-                inputs = inputs.to(DEVICE).float()
-                labels = labels.to(
-                    DEVICE).float()  # labels are high-resolution ground truth, float type is 32bit, double is 64bit floating point number
+                # inputs = inputs.to(DEVICE).float()
+                # labels = labels.to(
+                #     DEVICE).float()  # labels are high-resolution ground truth, float type is 32bit, double is 64bit floating point number
 
                 preds = model(inputs)
                 loss = criterion(preds, labels)
@@ -93,8 +94,8 @@ def train_function(model, criterion, optimizer,
 
         for data in eval_dataloader:
             inputs, labels = data
-            inputs = inputs.to(DEVICE).float()
-            labels = labels.to(DEVICE).float()
+            inputs = inputs.to(DEVICE)
+            labels = labels.to(DEVICE)
 
             # print(torch.max(inputs))
             # print(torch.max(labels))
@@ -145,7 +146,7 @@ def train_function(model, criterion, optimizer,
 if __name__ == '__main__':
     SEED = 0
     LEARNING_RATE = 5e-4
-    NUM_EPOCHS = 2
+    NUM_EPOCHS = 4
     BATCH_SIZE = 4
     NUM_WORKERS = 0
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -159,35 +160,35 @@ if __name__ == '__main__':
     # dataset_small = Subset(dataset_h5, np.arange(5))
     # CHANNELS = 1
 
-    """91-Images Dataset"""
-    train_file_name = '91-image_x4.h5'
-    TRAIN_FILE = os.path.abspath(os.path.join(__file__, f'../data_SR/91-Images/{train_file_name}'))
-    dataset_h5 = TrainDatasetH5(TRAIN_FILE)
-    dataset_small = Subset(dataset_h5, np.arange(1000))
-    CHANNELS = 1
+    # """91-Images Dataset"""
+    # train_file_name = '91-image_x4.h5'
+    # TRAIN_FILE = os.path.abspath(os.path.join(__file__, f'../data_SR/91-Images/{train_file_name}'))
+    # dataset_h5 = TrainDatasetH5(TRAIN_FILE)
+    # dataset_small = Subset(dataset_h5, np.arange(1000))
+    # CHANNELS = 1
 
     """BSD100 Dataset"""
-    # link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_4'
-    # BSD100_dataset = BSD100(root_dir=link, scale=4, transform=MINIMALIST_TRANSFORM)
+    link_folder_name = 'image_SRF_2'
+    link = os.path.abspath(os.path.join(__file__, f'../data_SR/BSD100/{link_folder_name}'))
+    dataset_h5 = BSD100(root_dir=link, scale=2, transform=MINIMALIST_TRANSFORM)
     # print(len(BSD100_dataset))
-    # dataset_small = Subset(BSD100_dataset, np.arange(10))
-    # CHANNELS = 3
+    dataset_small = Subset(dataset_h5, np.arange(10))
+    CHANNELS = 3
 
-    TRAIN_DATASET, EVAL_DATASET = train_test_split(dataset_small, test_size=0.1, random_state=SEED)
+    TRAIN_DATASET, EVAL_DATASET = train_test_split(dataset_h5, test_size=0.1, random_state=SEED)
     print('Train-Eval-Split is done. \nThere are x images in the \nTraining Set: {}\nEval Set: {}'.format(
         len(TRAIN_DATASET), len(EVAL_DATASET)))
 
     OUT_DIR = "outputs/SRCNN-BSD100-X4"
-    MODEL = SRCNN(num_channels=CHANNELS).to(
-        DEVICE).double()  # num_channels = 1 for gray scale images, 3 for color images
-    # MODEL = VDSR(num_channels=CHANNELS, d=4).to(DEVICE).float()  #default is three channel (e.g. RGB) images
+    MODEL = SRCNN(num_channels=CHANNELS).to(DEVICE).double()  # num_channels = 1 for gray scale images, 3 for color images
+    # MODEL = VDSR(num_channels=CHANNELS, d=4).to(DEVICE).double()  # default is three channel (e.g. RGB) images
 
     OPTIMIZER = optim.Adam(MODEL.parameters(),
                            lr=LEARNING_RATE)  # all training, later: train head and backbone separate
     # OPTIMIZER = optim.SGD(MODEL.parameters(), lr=LEARNING_RATE)
 
     # CRITERION = nn.MSELoss() #Mean-Squared-Error Loss = L2 loss
-    CRITERION = nn.L1Loss()  # L1 Loss
+    CRITERION = nn.L1Loss().to(DEVICE)  # L1 Loss
 
     train_function(model=MODEL,
                    criterion=CRITERION,
