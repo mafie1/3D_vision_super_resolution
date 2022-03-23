@@ -5,8 +5,6 @@ import torch
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import mean_squared_error
 from skimage.metrics import peak_signal_noise_ratio
-from datasets import TrainDatasetH5
-import matplotlib.pyplot as plt
 
 
 def calc_psnr(img1, img2):
@@ -61,6 +59,9 @@ def weighted_loss(original, compressed):
 
 
 if __name__ == '__main__':
+    from datasets import TrainDatasetH5
+    import matplotlib.pyplot as plt
+
     TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data/Set5/91-image_x2.h5"
     dataset_h5 = TrainDatasetH5(TRAIN_FILE)
 

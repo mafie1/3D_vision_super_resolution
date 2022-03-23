@@ -7,16 +7,18 @@ from torch.utils.data import Dataset
 from PIL import Image
 import matplotlib.pyplot as plt
 from skimage import io
-from skimage.transform import rescale as rescale #, resize, downscale_local_mean
+from skimage.transform import rescale as rescale  # , resize, downscale_local_mean
 from skimage.transform import rotate as rotate
 
 from utils import set_all_seeds
-from metrics import PSNR, SSIM, calc_ssim, calc_psnr
-
+from metrics import _psnr, _ssim, calc_ssim, calc_psnr
 
 """Datasets for H5 """
+
+
 class TrainDatasetH5(Dataset):
     """Train Dataset for H% and 92"""
+
     def __init__(self, h5_file):
         super(TrainDatasetH5, self).__init__()
         self.h5_file = h5_file
@@ -46,6 +48,7 @@ class EvalDatasetH5(Dataset):
 
 class BSD100(Dataset):
     """Description"""
+
     def __init__(self, root_dir=None, transform=None, scale=None):
         """
         Args:
@@ -54,13 +57,13 @@ class BSD100(Dataset):
                 on a sample.
         """
         self.scale = scale
-        self.root = root_dir #'/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSDS100/images/'
+        self.root = root_dir  # '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSDS100/images/'
         self.transform = transform
 
     def __len__(self):
         onlyfiles = sorted(next(os.walk(self.root))[2])  # dir is your directory path as string
         number_files = len(onlyfiles)
-        return int(number_files*0.5)
+        return int(number_files * 0.5)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -76,12 +79,12 @@ class BSD100(Dataset):
         img_HR = io.imread(img_path_HR)
         img_LR = io.imread(img_path_LR)
 
-        #make sure all images are horzontally aligned
+        # make sure all images are horzontally aligned
         if img_HR.shape[0] > img_HR.shape[1]:
             img_HR = rotate(img_HR, angle=90, resize=True, center=None, order=None, mode='constant',
-                                     clip=True, preserve_range=False)
+                            clip=True, preserve_range=False)
             img_LR = rotate(img_LR, angle=90, resize=True, center=None, order=None, mode='constant',
-                                     clip=True, preserve_range=False)
+                            clip=True, preserve_range=False)
         else:
             img_HR = rotate(img_HR, angle=0, resize=True, center=None, order=None, mode='constant',
                             clip=True, preserve_range=False)
@@ -90,12 +93,12 @@ class BSD100(Dataset):
 
         """Upsample Low Resolution Image"""
         if self.scale is not None:
-            img_LR_upsampled = rescale(img_LR, self.scale, order=3, channel_axis=2) #order 3 => bicubic
+            img_LR_upsampled = rescale(img_LR, self.scale, order=3, channel_axis=2)  # order 3 => bicubic
             img_LR = img_LR_upsampled
             assert img_HR.shape == img_LR.shape
 
         if self.transform is not None:
-            transform_seed = np.random.randint(0,10000)
+            transform_seed = np.random.randint(0, 10000)
 
             set_all_seeds(transform_seed)
             img_HR = self.transform(img_HR)
@@ -104,6 +107,7 @@ class BSD100(Dataset):
             img_LR = self.transform(img_LR)
 
         return img_LR, img_HR
+
 
 def test_h5():
     TRAIN_FILE = "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/91-Images/91-image_x4.h5"
@@ -123,7 +127,6 @@ def test_h5():
     print(label.shape)
 
 
-
 def test_BSD100():
     link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_2'
     BSD100_dataset = BSD100(root_dir=link, scale=2)
@@ -133,7 +136,7 @@ def test_BSD100():
     ssims = np.ones(5)
 
     for i in range(0, 5):
-        lr_image, hr_image = BSD100_dataset.__getitem__(i+1)
+        lr_image, hr_image = BSD100_dataset.__getitem__(i + 1)
 
         plt.imshow(lr_image)
         plt.title('Low Resolution')
@@ -145,31 +148,27 @@ def test_BSD100():
         lr_image = torch.from_numpy(lr_image)
         hr_image = torch.from_numpy(hr_image)
 
-        #print(calc_psnr(lr_image, hr_image))
+        # print(calc_psnr(lr_image, hr_image))
 
         lr_image = lr_image.squeeze(0).cpu().detach().numpy()
         hr_image = hr_image.squeeze(0).cpu().detach().numpy()
 
-        psnes[i] = PSNR(lr_image, hr_image)
-        ssims[i] = SSIM(lr_image, hr_image)
+        psnes[i] = _psnr(lr_image, hr_image)
+        ssims[i] = _ssim(lr_image, hr_image)
 
-        print(PSNR(lr_image, hr_image))
-        print(SSIM(lr_image, hr_image))
+        print(_psnr(lr_image, hr_image))
+        print(_ssim(lr_image, hr_image))
 
     plt.plot(psnes)
     plt.plot(ssims)
     plt.show()
 
+
 if __name__ == '__main__':
     test_h5()
-    #test_BSD100()
+    # test_BSD100()
 
+    # dataset = BSDS500(mode='test')
+    # print(len(dataset))
 
-    #dataset = BSDS500(mode='test')
-    #print(len(dataset))
-
-    #image, label = dataset.__getitem__(1)
-
-
-
-
+    # image, label = dataset.__getitem__(1)
