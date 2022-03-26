@@ -15,7 +15,6 @@ from metrics import _psnr, _ssim, calc_ssim, calc_psnr
 
 """Datasets for H5 """
 
-
 class TrainDatasetH5(Dataset):
     """Train Dataset for H% and 92"""
 
@@ -126,6 +125,26 @@ def test_h5():
     print(image.shape)
     print(label.shape)
 
+def test_Set5():
+    """Set 5 Dataset --> use for example as validatation set"""
+    train_file_name = 'Set5_x4.h5'
+    TRAIN_FILE = os.path.abspath(os.path.join(__file__, f'../data_SR/Set5/{train_file_name}'))
+    # "/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/Set5/Set5_x2.h5"
+    dataset_h5 = TrainDatasetH5(TRAIN_FILE)
+    print(len(dataset_h5))
+
+    image, label = dataset_h5.__getitem__(0)
+
+    plt.imshow(image[0, :, :], cmap='gray', interpolation='bicubic')
+    plt.title('Low Resolution Image')
+    plt.show()
+
+    plt.imshow(label[0, :, :], cmap='gray', interpolation='bicubic')
+    plt.title('High Resolution Image')
+    plt.show()
+
+    print(image.shape)
+    print(label.shape)
 
 def test_BSD100():
     link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_2'
@@ -165,7 +184,9 @@ def test_BSD100():
 
 
 if __name__ == '__main__':
-    test_h5()
+    #test_h5()
+    test_Set5()
+
     # test_BSD100()
 
     # dataset = BSDS500(mode='test')
