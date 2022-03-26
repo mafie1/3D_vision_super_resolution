@@ -133,9 +133,10 @@ def train_function(model, criterion, optimizer,
             best_epoch = epoch
             best_psnr = epoch_psnr.avg
             best_weights = copy.deepcopy(model.state_dict())
+            best_ssim = epoch_SSIM.avg
 
     """End of Training Statistics & Save Best Model"""
-    print('best epoch: {}, psnr: {:.2f}dB'.format(best_epoch, best_psnr))
+    print('best epoch: {}, psnr: {:.2f}dB, ssim: {:.2f}'.format(best_epoch, best_psnr, best_ssim))
     torch.save(best_weights, os.path.join(OUT_DIR, 'best.pth'))
 
     img_grid_end = torchvision.utils.make_grid(torch.cat((inputs, labels, preds), 0), nrow=3, padding=2)
@@ -146,7 +147,7 @@ def train_function(model, criterion, optimizer,
 if __name__ == '__main__':
     SEED = 0
     LEARNING_RATE = 5e-4
-    NUM_EPOCHS = 4
+    NUM_EPOCHS = 40
     BATCH_SIZE = 4
     NUM_WORKERS = 0
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -160,28 +161,28 @@ if __name__ == '__main__':
     # dataset_small = Subset(dataset_h5, np.arange(5))
     # CHANNELS = 1
 
-    # """91-Images Dataset"""
-    # train_file_name = '91-image_x4.h5'
-    # TRAIN_FILE = os.path.abspath(os.path.join(__file__, f'../data_SR/91-Images/{train_file_name}'))
-    # dataset_h5 = TrainDatasetH5(TRAIN_FILE)
-    # dataset_small = Subset(dataset_h5, np.arange(1000))
-    # CHANNELS = 1
+    """91-Images Dataset"""
+    train_file_name = '91-image_x4.h5'
+    TRAIN_FILE = os.path.abspath(os.path.join(__file__, f'../data_SR/91-Images/{train_file_name}'))
+    dataset_h5 = TrainDatasetH5(TRAIN_FILE)
+    dataset_small = Subset(dataset_h5, np.arange(1000))
+    CHANNELS = 1
 
-    """BSD100 Dataset"""
-    link_folder_name = 'image_SRF_2'
-    link = os.path.abspath(os.path.join(__file__, f'../data_SR/BSD100/{link_folder_name}'))
-    dataset_h5 = BSD100(root_dir=link, scale=2, transform=MINIMALIST_TRANSFORM)
-    # print(len(BSD100_dataset))
-    dataset_small = Subset(dataset_h5, np.arange(10))
-    CHANNELS = 3
+    # """BSD100 Dataset"""
+    # link_folder_name = 'image_SRF_4'
+    # link = os.path.abspath(os.path.join(__file__, f'../data_SR/BSD100/{link_folder_name}'))
+    # dataset_h5 = BSD100(root_dir=link, scale=4, transform=MINIMALIST_TRANSFORM)
+    # # print(len(BSD100_dataset))
+    # dataset_small = Subset(dataset_h5, np.arange(10))
+    # CHANNELS = 3
 
     TRAIN_DATASET, EVAL_DATASET = train_test_split(dataset_h5, test_size=0.1, random_state=SEED)
     print('Train-Eval-Split is done. \nThere are x images in the \nTraining Set: {}\nEval Set: {}'.format(
         len(TRAIN_DATASET), len(EVAL_DATASET)))
 
-    OUT_DIR = "outputs/SRCNN-BSD100-X4"
-    MODEL = SRCNN(num_channels=CHANNELS).to(DEVICE).double()  # num_channels = 1 for gray scale images, 3 for color images
-    # MODEL = VDSR(num_channels=CHANNELS, d=4).to(DEVICE).double()  # default is three channel (e.g. RGB) images
+    OUT_DIR = "outputs/SRCNN-91-X4"
+    MODEL = SRCNN(num_channels=CHANNELS).to(DEVICE)  # num_channels = 1 for gray scale images, 3 for color images
+    # MODEL = VDSR(num_channels=CHANNELS, d=4).to(DEVICE)  # default is three channel (e.g. RGB) images
 
     OPTIMIZER = optim.Adam(MODEL.parameters(),
                            lr=LEARNING_RATE)  # all training, later: train head and backbone separate
