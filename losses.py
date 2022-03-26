@@ -30,11 +30,13 @@ class Charbonnier(nn.Module):
 
 
 if __name__ == '__main__':
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(DEVICE)
     tensor1 = torch.rand(4, 3, 200, 200)
     tensor2 = torch.rand(4, 3, 200, 200)
 
     loss = Charbonnier()
-    loss_L1 = nn.L1Loss
+    loss_L1 = nn.L1Loss()
     loss_MSE = nn.MSELoss()
 
     print(loss(tensor1, tensor2))
