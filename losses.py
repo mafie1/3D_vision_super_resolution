@@ -1,22 +1,6 @@
 import torch
 import torch.nn as nn
 
-
-class Loss():
-
-    def __init__(self):
-        pass
-
-    def total_variation_loss(self):
-        pass
-
-    def pixel_loss(self):
-        pass
-
-    def content_loss(self):
-        pass
-
-
 class Charbonnier(nn.Module):
     def __init__(self, epsilon=1e-3):
         super(Charbonnier, self).__init__()

@@ -30,12 +30,17 @@ def display_tensor(t):
         img = t[0]
     else:
         img = t
+
+    color = None
+    if t.size()[0] == 1:
+        color = 'gray'
+
     # print(img.size())
     img = img.permute(1, 2, 0).cpu().detach().numpy()
     # plotting
     plt.xticks([])
     plt.yticks([])
-    plt.imshow(img)
+    plt.imshow(img, cmap = color)
     plt.show()
 
 

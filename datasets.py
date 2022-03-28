@@ -4,6 +4,7 @@ import os
 import io
 import torch
 from torch.utils.data import Dataset
+import torchvision.transforms as transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 from skimage import io
@@ -91,10 +92,13 @@ class BSD100(Dataset):
                             clip=True, preserve_range=False)
 
         """Upsample Low Resolution Image"""
-        if self.scale is not None:
+        if self.scale:
+            print('scaling')
             img_LR_upsampled = rescale(img_LR, self.scale, order=3, channel_axis=2)  # order 3 => bicubic
+            #print(img_LR_upsampled.shape)
+            #print(img_LR_upsampled.shape, img_HR.shape)
+            assert img_HR.shape == img_LR_upsampled.shape
             img_LR = img_LR_upsampled
-            assert img_HR.shape == img_LR.shape
 
         if self.transform is not None:
             transform_seed = np.random.randint(0, 10000)
@@ -148,7 +152,7 @@ def test_Set5():
 
 def test_BSD100():
     link = '/Users/luisaneubauer/Documents/WS 2021:22/3D Reconstruction/super_resolution/data_SR/BSD100/image_SRF_2'
-    BSD100_dataset = BSD100(root_dir=link, scale=2)
+    BSD100_dataset = BSD100(root_dir=link)
     print(len(BSD100_dataset))
 
     psnes = np.ones(5)
@@ -185,9 +189,9 @@ def test_BSD100():
 
 if __name__ == '__main__':
     #test_h5()
-    test_Set5()
+    #test_Set5()
 
-    # test_BSD100()
+    test_BSD100()
 
     # dataset = BSDS500(mode='test')
     # print(len(dataset))
