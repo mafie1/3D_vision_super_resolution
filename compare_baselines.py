@@ -1,15 +1,12 @@
 import torch
 import numpy as np
-import os
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data import Subset
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 import torchvision
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 import os
-import copy
 import numpy as np
 from sklearn.model_selection import train_test_split
 from metrics import ssim, calc_ssim, _psnr, calc_psnr
@@ -22,7 +19,6 @@ from metrics import _psnr, _ssim, calc_ssim, calc_psnr
 
 from skimage.transform import rotate as rotate
 from skimage import io
-
 
 class BSD100_comp(Dataset):
     """Description"""

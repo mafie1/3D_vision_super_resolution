@@ -43,7 +43,6 @@ def display_tensor(t):
     plt.imshow(img, cmap = color)
     plt.show()
 
-
 def set_all_seeds(seed):
     torch.manual_seed(seed)
     np.random.seed(seed)
