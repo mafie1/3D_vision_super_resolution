@@ -14,6 +14,9 @@
 - Due to hardware limitations, the model sizes are quite small and we would like to train for more epochs if we could get our hands on a proper GPU.
 - The write-up can be found under Super_Resolution_Project_Docu.pdf
 
-
+![Alt text](Super_Resolution_Project_Docu_.jpg?raw=true "Title")
+![Alt text](Super_Resolution_Project_Docu_2.jpg?raw=true "Title")
+![Alt text](Super_Resolution_Project_Docu_3.jpg?raw=true "Title")
+![Alt text](Super_Resolution_Project_Docu_4.jpg?raw=true "Title")
+![Alt text](Super_Resolution_Project_Docu_5.jpg?raw=true "Title")
 ![Alt text](Super_Resolution_Project_Docu_6.jpg?raw=true "Title")
-
