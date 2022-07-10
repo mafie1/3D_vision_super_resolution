@@ -15,7 +15,5 @@
 - The write-up can be found under Super_Resolution_Project_Docu.pdf
 
 
-___
-Our student IDs are:
-- Luisa Nadine Neubauer (Physik B.A., 4013523)
-- Mikail Deniz Cayoglu (Data and Computer Science, 3437201)
+![Alt text](Super_Resolution_Project_Docu_6.jpg?raw=true "Title")
+
